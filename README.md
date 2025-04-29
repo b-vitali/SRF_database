@@ -6,7 +6,7 @@ This project wants to be a database of the test results of SRF cavities
 > The project is in an early phase... Much could be wrong and much will change
 
 The main idea is the following:
-1. Use a combo of `python` + `SQLite` to collect the data
+1. Use a combination of `python` + `SQLite` to collect the data
 2. Use a `python` based UI to query, browse and visualize the data
 
 As of right now the data can be inserted in few different ways
@@ -14,7 +14,7 @@ As of right now the data can be inserted in few different ways
 The endgoal is an _automatic_ collection of all the info inside the `data` folder
 
 ## Use
-If the data.db is missing or not up to date run `python collect_database.py`
+If data.db is missing or outdated run `python collect_database.py`
 
 To open the browsing UI run `streamlit run app.py`
 
@@ -23,6 +23,13 @@ To open the browsing UI run `streamlit run app.py`
 > This second command will depend on the UI design
 >
 > Currently `sltreamlit` is being used but this might change
+
+## Requirements
+In addition to a working `python` installation (`sqlite3` should be in `python3`), you will need 
+```
+pip install pandas matplotlib streamlit
+``` 
+As Mentioned, `sltreamlit` might be later dropped in favour of another UI
 
 ## Structure
 The aim is to structure the project as follows (please ignore the temporary test files) 
@@ -45,7 +52,7 @@ The aim is to structure the project as follows (please ignore the temporary test
 
 The final structure of the `data.txt` is still under discussion
 
-The structure of the `metadata.json` will probably resamble something like this
+The structure of the `metadata.json` will probably resemble something like this
 
 ```
 {
