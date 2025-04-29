@@ -2,6 +2,7 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
 # Load experiments metadata from the database
 def load_experiments():
@@ -15,6 +16,14 @@ def load_experiments():
 def load_data_for_experiment(experiment_id):
     conn = sqlite3.connect('data.db')
     query = f"SELECT * FROM data WHERE experiment_id = {experiment_id}"
+    df = pd.read_sql(query, conn)
+    conn.close()
+    return df
+
+# Load plots from the database for a specific experiment
+def load_plots_for_experiment(experiment_id):
+    conn = sqlite3.connect('data.db')
+    query = f"SELECT * FROM plots WHERE experiment_id = {experiment_id}"
     df = pd.read_sql(query, conn)
     conn.close()
     return df
@@ -90,9 +99,11 @@ def plot_data(df):
     elif plot_type == "Bar":
         st.bar_chart(df[[x_column, y_column]])
 
+# Main app function
 def main():
     st.title("Experiment Data Query and Visualization")
-    
+    st.write("Current working directory:", os.getcwd())
+
     # Load the experiments metadata
     experiments_df = load_experiments()
     
@@ -117,8 +128,20 @@ def main():
         st.dataframe(experiment_data_df)
         
         # Filter and plot the data for the selected experiment
-        filtered_data_df = filter_data(experiment_data_df)
-        plot_data(filtered_data_df)
+        if not experiment_data_df.empty:
+            filtered_data_df = filter_data(experiment_data_df)
+            plot_data(filtered_data_df)
+        
+        # Load and display plots for the selected experiment
+        plots_df = load_plots_for_experiment(experiment_id)
+        if not plots_df.empty:
+            st.write("### Associated Plots")
+            for _, row in plots_df.iterrows():
+                if os.path.exists(row['file_path']):
+                    st.image(row['file_path'], caption=row['caption'] if row['caption'] else "", use_column_width=True)
+                else:
+                    st.warning(f"Image file not found: {row['file_path']}")
 
+# Entry point
 if __name__ == "__main__":
     main()
