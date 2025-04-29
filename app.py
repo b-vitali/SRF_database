@@ -82,20 +82,21 @@ def plot_data(df):
     st.write("### Plot Data")
     
     # Let the user select the plot type
-    plot_type = st.selectbox("Select plot type", ["Line", "Scatter", "Bar"])
+    plot_type = st.selectbox("Select plot type", ["Scatter", "Line", "Bar"])
     
     # Select columns for x and y axes
     x_column = st.selectbox("Select x-axis column", df.columns)
     y_column = st.selectbox("Select y-axis column", df.columns)
     
-    if plot_type == "Line":
-        st.line_chart(df[[x_column, y_column]])
-    elif plot_type == "Scatter":
+
+    if plot_type == "Scatter":
         fig, ax = plt.subplots()
         ax.scatter(df[x_column], df[y_column])
         ax.set_xlabel(x_column)
         ax.set_ylabel(y_column)
         st.pyplot(fig)
+    elif plot_type == "Line":
+        st.line_chart(df[[x_column, y_column]])
     elif plot_type == "Bar":
         st.bar_chart(df[[x_column, y_column]])
 
@@ -138,7 +139,7 @@ def main():
             st.write("### Associated Plots")
             for _, row in plots_df.iterrows():
                 if os.path.exists(row['file_path']):
-                    st.image(row['file_path'], caption=row['caption'] if row['caption'] else "", use_column_width=True)
+                    st.image(row['file_path'], caption=row['caption'] if row['caption'] else "", use_container_width=True)
                 else:
                     st.warning(f"Image file not found: {row['file_path']}")
 

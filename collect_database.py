@@ -50,6 +50,42 @@ def create_database():
     conn.commit()
     conn.close()
 
+import os
+import json
+
+def import_experiment_from_folder(folder_path):
+    # Load metadata from JSON
+    metadata_path = os.path.join(folder_path, 'metadata.json')
+    with open(metadata_path, 'r') as f:
+        metadata = json.load(f)
+
+    experiment_name = metadata['experiment_name']
+    lab_name = metadata.get('lab_name', '')
+    description = metadata.get('description', '')
+    date = metadata['date']
+    article_url = metadata.get('article_url', None)
+
+    # Look for a CSV file
+    csv_file = None
+    for file in os.listdir(folder_path):
+        if file.endswith('.txt'):
+            csv_file = os.path.join(folder_path, file)
+            break
+
+    # Insert metadata and data
+    if csv_file:
+        insert_csv_to_db(csv_file, experiment_name, lab_name, description, date, article_url)
+    else:
+        insert_experiment_metadata(experiment_name, lab_name, description, date, article_url)
+
+    # Insert plots
+    for file in os.listdir(folder_path):
+        if file.lower().endswith(('.png', '.jpg', '.jpeg')):
+            file_path = os.path.join(folder_path, file)
+            insert_plot(experiment_name, date, os.path.join(folder_path, file))
+
+
+
 def insert_experiment_metadata(experiment_name, lab_name, description, date, article_url=None):
     conn = sqlite3.connect('data.db')
     cursor = conn.cursor()
@@ -127,8 +163,8 @@ create_database()
 # Step 2: Insert CSV-based experiments
 insert_csv_to_db('data/20250128_FNAL_103.txt', '20250128_FNAL_103', 'FNAL', 'Lore lipsium (data)', '2025-01-28', article_url='https://arxiv.org/abs/2401.12345')
 insert_csv_to_db('data/20250128_FNAL_103.txt', '20250128_FNAL_103_copy', 'FNAL', 'Lore lipsium (data)', '2025-01-28', article_url='https://arxiv.org/abs/2401.12345')
-insert_csv_to_db('data/FG004_throughTc.txt', 'FG004_throughTc', 'Lab A', 'Lore lipsium (data + plot)', '2025-04-01', article_url='https://arxiv.org/abs/2401.12342')
-insert_plot('FG004_throughTc', '2025-04-01', 'data/plot_freq_q0_dual.png', caption='Zoomed region near Tc')
+
+import_experiment_from_folder("data/FG004_throughTc")
 
 # Step 3: Insert plot-only experiment
 insert_experiment_metadata('FG005_no_data', 'Lab B', 'Lore lipsium (plot)', '2025-04-28')
