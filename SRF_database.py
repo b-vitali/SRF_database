@@ -4,6 +4,30 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
+# Define simple credentials
+USER_CREDENTIALS = {
+    "LASA": "LASA2025"
+}
+
+# Function to handle login
+def login():
+    st.title("Login Page")
+
+    # Collect user credentials
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    
+    # If login button is pressed
+    if st.button("Login"):
+        if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
+            st.session_state["logged_in"] = True  # Set a session flag
+            st.success("Login Successful!")
+        else:
+            st.session_state["logged_in"] = False
+            st.error("Incorrect Username or Password")
+    
+    return st.session_state.get("logged_in", False)
+
 # Load experiments metadata from the database
 def load_experiments():
     conn = sqlite3.connect('data.db')
@@ -102,6 +126,11 @@ def plot_data(df):
 
 # Main app function
 def main():
+    # Check if the user is logged in
+    if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
+        if not login():
+            return  # If not logged in, show the login page and exit
+    
     st.title("Experiment Data Query and Visualization")
     st.write("Current working directory:", os.getcwd())
 
