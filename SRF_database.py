@@ -157,27 +157,20 @@ def filter_data(df):
 # Function to plot data
 def plot_data(df):
     st.write("### Plot Data")
-    
-    # Let the user select the plot type
-    plot_type = st.selectbox("Select plot type", ["Scatter", "Line", "Bar"])
-    
+    cols = st.columns(2)
     # Select columns for x and y axes defalut to 'Temp' and 'Q0'
-    x_column = st.selectbox("Select x-axis column", df.columns, index=df.columns.get_loc("Temp"))
-    y_column = st.selectbox("Select y-axis column", df.columns, index=df.columns.get_loc("Q0"))
+    x_column = cols[0].selectbox("Select x-axis column", df.columns, index=df.columns.get_loc("Temp"))
+    y_column = cols[0].selectbox("Select y-axis column", df.columns, index=df.columns.get_loc("Q0"))
     
-    use_log_scale = st.checkbox("Use log scale for y-axis", value=False)
-    if plot_type == "Scatter":
-        fig, ax = plt.subplots()
-        ax.scatter(df[x_column], df[y_column])
-        ax.set_xlabel(x_column)
-        ax.set_ylabel(y_column)
-        if use_log_scale:
-            ax.set_yscale('log')
-        st.pyplot(fig)
-    elif plot_type == "Line":
-        st.line_chart(df[[x_column, y_column]])
-    elif plot_type == "Bar":
-        st.bar_chart(df[[x_column, y_column]])
+    use_log_scale = cols[0].checkbox("Use log scale for y-axis", value=False)
+
+    fig, ax = plt.subplots()
+    ax.scatter(df[x_column], df[y_column])
+    ax.set_xlabel(x_column)
+    ax.set_ylabel(y_column)
+    if use_log_scale:
+        ax.set_yscale('log')
+    cols[1].pyplot(fig)
 
 # Main app function
 def main():
@@ -234,8 +227,11 @@ def main():
     display_experiments(experiments_df)
     
     # Filter experiments based on user selection
-    filtered_experiments_df = filter_experiments(experiments_df)
-    
+    if st.checkbox("Filter by metadata information"):        
+        filtered_experiments_df = filter_experiments(experiments_df)
+    else:
+        filtered_experiments_df = experiments_df
+
     # If there are filtered experiments, allow the user to select one and load the corresponding data
     if not filtered_experiments_df.empty:
         experiment_name = st.selectbox("Select Experiment", filtered_experiments_df['experiment_name'])
