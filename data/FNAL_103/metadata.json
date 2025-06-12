@@ -1,0 +1,22 @@
+{
+  "experiment_name": "FNAL_103",
+  "lab_name": "FNAL",
+  "description": "Lore lipsium (data)",
+  "date": "2025-01-28",
+  "article_url": "https://arxiv.org/abs/2401.12345", 
+  "processing_steps": [
+    {
+      "process_type": "EP",
+      "description": "EP 120um",
+      "tags": "EP"
+    },
+    {
+      "process_type": "baking",
+      "description": "baking 75C for 3h",
+      "temperature C": 75,
+      "duration h": 3,
+      "tags": "lowT"
+    }
+  ]
+}
+

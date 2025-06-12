@@ -3,5 +3,31 @@
   "lab_name": "Lab A",
   "description": "Lore lipsium (data + plot)",
   "date": "2025-04-01",
-  "article_url": "https://arxiv.org/abs/2401.12342"
+  "article_url": "https://arxiv.org/abs/2401.12342",
+  "processing_steps": [
+    {
+      "process_type": "EP",
+      "description": "EP 70um",
+      "tags": "EP"
+    },
+    {
+      "process_type": "baking",
+      "description": "baking 75C for 3h",
+      "temperature C": 75,
+      "duration h": 3,
+      "tags": "lowT"
+    },
+    {
+      "process_type": "baking",
+      "description": "baking 300C for 3h",
+      "temperature C": 300,
+      "duration h": 2,
+      "tags": "midT"
+    },
+    {
+      "process_type": "EP",
+      "description": "EP 5um",
+      "tags": "EP"
+    }
+  ]  
 }
