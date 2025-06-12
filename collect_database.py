@@ -198,8 +198,13 @@ def import_experiment_from_folder(folder_path):
 create_database()
 
 # Step 2: Insert experiments from folders
-import_experiment_from_folder("data/FG004_throughTc")
-import_experiment_from_folder("data/FNAL_103")
+base_folder = "data"
+for entry in os.listdir(base_folder):
+        subfolder_path = os.path.join(base_folder, entry)
+        if os.path.isdir(subfolder_path):
+            import_experiment_from_folder(subfolder_path)
+# import_experiment_from_folder("data/FG004_throughTc")
+# import_experiment_from_folder("data/FNAL_103")
 
 # Step 3: Insert plot-only experiment
 insert_experiment_metadata('FG005_no_data', 'Lab B', 'Lore lipsium (plot)', '2025-04-28')

@@ -145,8 +145,39 @@ def filter_data(df):
     else:  # For numeric columns
         min_value = float(df[column_name].min())
         max_value = float(df[column_name].max())
-        selected_range = st.slider(f"Select range for {column_name}", min_value, max_value, (min_value, max_value))
-        filtered_df = df[(df[column_name] >= selected_range[0]) & (df[column_name] <= selected_range[1])]
+        st.write(f"Value range in data: {min_value:.2f} to {max_value:.2f}")
+        
+        # Two top-level columns: Left for method, Right for inputs
+        col_left, col_right = st.columns([1, 3])
+
+        with col_left:
+            use_manual_input = st.radio("Input Method", ["Slider", "Manual Input"], index=0)
+
+        with col_right:
+            if use_manual_input == "Slider":
+                selected_range = st.slider(
+                    f"Select range for {column_name}",
+                    min_value, max_value,
+                    (min_value, max_value),
+                    key=f"slider_{column_name}"
+                )
+            else:
+                # Split the right column into two for Min and Max input fields
+                min_col, max_col = col_right.columns(2)
+                min_input = min_col.number_input(
+                    f"Min {column_name}", value=min_value, step=0.1, key=f"min_input_{column_name}"
+                )
+                max_input = max_col.number_input(
+                    f"Max {column_name}", value=max_value, step=0.1, key=f"max_input_{column_name}"
+                )
+                selected_range = (min_input, max_input)
+
+        # Apply the filter
+        filtered_df = df[
+            (df[column_name] >= selected_range[0]) &
+            (df[column_name] <= selected_range[1])
+        ]
+
     
     if st.checkbox("Show the filtered data"):
         st.write("### Filtered Data")
@@ -194,7 +225,9 @@ def main():
             st.session_state["selected_tags"] = []
 
         st.write("### Click on tags to add/remove them from filter:")
-        cols = st.columns(6)  # Adjust number of columns for layout
+        # Dynamically determine number of columns
+        num_tags = len(all_tags)
+        cols = st.columns(num_tags)
 
         for idx, tag in enumerate(all_tags):
             col = cols[idx % 6]
