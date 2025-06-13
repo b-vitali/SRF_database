@@ -369,5 +369,5 @@ def create_and_download_data():
 
 # Then inside your main() function, after your existing code add:
 
-if st.button("Create and download new data set"):
+if st.checkbox("Create and download new data set"):
     create_and_download_data()
