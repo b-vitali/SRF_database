@@ -14,27 +14,81 @@ def create_and_download():
     date = st.date_input("Date", value=datetime.strptime("2025-01-28", "%Y-%m-%d"))
     article_url = st.text_input("Article URL", value="https://arxiv.org/abs/2401.12345")
 
-    st.write("### Processing Steps")
+    # Initialize session state
+    if "proc_enabled" not in st.session_state:
+        st.session_state.proc_enabled = False
 
-    # We'll let user add multiple processing steps
-    # We'll keep the processing steps in session state for dynamic add/remove (simple version: fixed 3 steps)
     if "proc_steps" not in st.session_state:
-        st.session_state.proc_steps = [
-            {"process_type": "EP", "description": "EP 120um", "temperature C": None, "duration h": None, "tags": "EP"},
-            {"process_type": "baking", "description": "baking 75C for 3h", "temperature C": 75, "duration h": 3, "tags": "lowT"},
-            {"process_type": "BCP", "description": "BCP 20um", "temperature C": None, "duration h": None, "tags": "BCP"},
-        ]
+        st.session_state.proc_steps = []
 
-    proc_steps = st.session_state.proc_steps
+    # Checkbox to enable processing steps
+    st.write("### Enable Processing Steps")
+    st.session_state.proc_enabled = st.checkbox("Define processing steps", value=st.session_state.proc_enabled)
 
-    for i, step in enumerate(proc_steps):
-        st.write(f"Processing Step {i+1}")
-        step['process_type'] = st.text_input(f"Process Type {i+1}", value=step.get("process_type", ""), key=f"ptype_{i}")
-        step['description'] = st.text_input(f"Description {i+1}", value=step.get("description", ""), key=f"desc_{i}")
-        # Optional temperature and duration (only for some steps)
-        step['temperature C'] = st.number_input(f"Temperature C {i+1} (optional)", value=step.get("temperature C") or 0.0, key=f"temp_{i}", format="%.2f")
-        step['duration h'] = st.number_input(f"Duration h {i+1} (optional)", value=step.get("duration h") or 0.0, key=f"dur_{i}", format="%.2f")
-        step['tags'] = st.text_input(f"Tags {i+1}", value=step.get("tags", ""), key=f"tags_{i}")
+    # If user checks the box and no steps exist, add one default step
+    if st.session_state.proc_enabled and not st.session_state.proc_steps:
+        st.session_state.proc_steps.append({
+            "process_type": "",
+            "description": "",
+            "temperature C": 0.0,
+            "duration h": 0.0,
+            "tags": ""
+        })
+
+    # Logic for showing and managing steps only if enabled
+    if st.session_state.proc_enabled:
+
+        steps_to_remove = []
+        steps_to_move_up = []
+        steps_to_move_down = []
+
+        for i, step in enumerate(st.session_state.proc_steps):
+            with st.expander(f"Processing Step {i+1}", expanded=True):
+                col1, col2 = st.columns(2)
+                with col1:
+                    step['process_type'] = st.text_input(f"Process Type {i+1}", value=step.get("process_type", ""), key=f"ptype_{i}")
+                    step['tags'] = st.text_input(f"Tags {i+1}", value=step.get("tags", ""), key=f"tags_{i}")
+                with col2:
+                    step['temperature C'] = st.number_input(f"Temperature C {i+1}", value=step.get("temperature C"), key=f"temp_{i}", format="%.2f")
+                    step['duration h'] = st.number_input(f"Duration h {i+1}", value=step.get("duration h"), key=f"dur_{i}", format="%.2f")
+                step['description'] = st.text_input(f"Description {i+1}", value=step.get("description", ""), key=f"desc_{i}")
+
+                col1, col2, col3, col4  = st.columns(4)
+                with col1:
+                    if st.button(f"⬆️ Move Up {i+1}", key=f"up_{i}") and i > 0:
+                        steps_to_move_up.append(i)
+                with col2:
+                    if st.button(f"⬇️ Move Down {i+1}", key=f"down_{i}") and i < len(st.session_state.proc_steps) - 1:
+                        steps_to_move_down.append(i)
+                with col3:
+                    if st.button(f"❌ Remove Step {i+1}", key=f"remove_{i}"):
+                        steps_to_remove.append(i)
+                with col4:
+                    # Add button at the end of each step
+                    if st.button(f"➕ Add Step {i+1+1}", key=f"add_after_{i}"):
+                        st.session_state.proc_steps.insert(i + 1, {
+                            "process_type": "",
+                            "description": "",
+                            "temperature C": 0.0,
+                            "duration h": 0.0,
+                            "tags": ""
+                        })
+
+        # Apply moves and deletions
+        for i in steps_to_move_up:
+            st.session_state.proc_steps[i - 1], st.session_state.proc_steps[i] = (
+                st.session_state.proc_steps[i],
+                st.session_state.proc_steps[i - 1],
+            )
+
+        for i in steps_to_move_down:
+            st.session_state.proc_steps[i + 1], st.session_state.proc_steps[i] = (
+                st.session_state.proc_steps[i],
+                st.session_state.proc_steps[i + 1],
+            )
+
+        for i in reversed(steps_to_remove):
+            st.session_state.proc_steps.pop(i)
 
     # Raw data input (multiline text area)
     st.write("### Paste Raw Data (tab-delimited)")
@@ -71,15 +125,15 @@ def create_and_download():
             "processing_steps": []
         }
 
-        for step in proc_steps:
-            # Clean step dict - remove keys with None or 0 values
-            cleaned_step = {
-                k: (v if v not in [None, 0, 0.0, ""] else None)
-                for k, v in step.items()
-            }
-            # Remove keys with None values
-            cleaned_step = {k: v for k, v in cleaned_step.items() if v is not None}
-            metadata["processing_steps"].append(cleaned_step)
+        # Include processing steps only if enabled
+        if st.session_state.proc_enabled:
+            for step in st.session_state.proc_steps:
+                cleaned_step = {
+                    k: (v if v not in [None, 0, 0.0, ""] else None)
+                    for k, v in step.items()
+                }
+                cleaned_step = {k: v for k, v in cleaned_step.items() if v is not None}
+                metadata["processing_steps"].append(cleaned_step)
 
         # Create in-memory zipfile
         zip_buffer = io.BytesIO()
