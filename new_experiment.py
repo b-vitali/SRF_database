@@ -5,7 +5,7 @@ import zipfile
 from datetime import datetime
 
 def create_and_download():
-    st.title("Create and Download New Data Set")
+    st.title("Add new Data Set")
 
     # Input metadata
     experiment_name = st.text_input("Experiment Name", value="FNAL_103.1")
@@ -107,6 +107,61 @@ def create_and_download():
     # Filename input
     filename_base = st.text_input("Base filename (without extension)", value=experiment_name.replace(" ", "_"))
 
+    if "images_enabled" not in st.session_state:
+        st.session_state.images_enabled = False
+    if "image_files" not in st.session_state:
+        st.session_state.image_files = []
+
+    st.session_state.images_enabled = st.checkbox("Attach images (PNG/JPEG)", value=st.session_state.images_enabled)
+
+    if st.session_state.images_enabled:
+
+        imgs_to_remove = []
+        imgs_to_move_up = []
+        imgs_to_move_down = []
+
+        for i in range(len(st.session_state.image_files)):
+            with st.expander(f"Image {i+1}", expanded=True):
+                st.session_state.image_files[i] = st.file_uploader(
+                    f"Upload Image {i+1}", 
+                    type=["png", "jpg", "jpeg"], 
+                    key=f"image_upload_{i}"
+                )
+
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    if st.button(f"⬆️ Move Up Image {i+1}", key=f"img_up_{i}") and i > 0:
+                        imgs_to_move_up.append(i)
+                with col2:
+                    if st.button(f"⬇️ Move Down Image {i+1}", key=f"img_down_{i}") and i < len(st.session_state.image_files) - 1:
+                        imgs_to_move_down.append(i)
+                with col3:
+                    if st.button(f"❌ Remove Image {i+1}", key=f"img_remove_{i}"):
+                        imgs_to_remove.append(i)
+                with col4:
+                    if st.button(f"➕ Add Image After {i+1}", key=f"img_add_after_{i}"):
+                        st.session_state.image_files.insert(i + 1, None)
+
+        # Add button outside to append one more
+        if st.button("➕ Add Another Image"):
+            st.session_state.image_files.append(None)
+
+        # Apply image list changes
+        for i in imgs_to_move_up:
+            st.session_state.image_files[i - 1], st.session_state.image_files[i] = (
+                st.session_state.image_files[i],
+                st.session_state.image_files[i - 1],
+            )
+
+        for i in imgs_to_move_down:
+            st.session_state.image_files[i + 1], st.session_state.image_files[i] = (
+                st.session_state.image_files[i],
+                st.session_state.image_files[i + 1],
+            )
+
+        for i in reversed(imgs_to_remove):
+            st.session_state.image_files.pop(i)
+
     if st.button("Generate and Download Data ZIP"):
         if not filename_base:
             st.error("Please enter a base filename.")
@@ -142,6 +197,13 @@ def create_and_download():
             zf.writestr(f"{filename_base}_metadata.json", json.dumps(metadata, indent=2))
             # Add raw data txt
             zf.writestr(f"{filename_base}_data.txt", raw_data_text)
+
+            # Include image files
+            if st.session_state.images_enabled:
+                for idx, img_file in enumerate(st.session_state.image_files):
+                    if img_file is not None:
+                        ext = img_file.name.split('.')[-1]
+                        zf.writestr(f"{filename_base}_image_{idx+1}.{ext}", img_file.getbuffer())
 
         zip_buffer.seek(0)
 
