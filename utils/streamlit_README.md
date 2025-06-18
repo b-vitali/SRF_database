@@ -2,19 +2,19 @@
 This project wants to be a database of the test results of SRF cavities
 
 The main idea is the following:
-1. Use a combination of `python` + `SQLite` to collect the data
-2. Use a `python` based UI to query, browse and visualize the data
+1. Use a combination of **python** + **SQLite** to collect the data
+2. Use a **python** based UI to query, browse and visualize the data
 
 ## Use
 This streamlit UI interface has 3 main sections
-1. A quary/plotting inteface to navigate the existing `data/srf_database.db`
+1. A quary/plotting inteface to navigate the existing **data/srf_database.db**
 1. A UI to help you generate new data in the correct format 
-  NB: to update the database you need to run locally `python collect_database.py`
+  NB: to update the database you need to run locally **python collect_database.py**
 1. This README to help you out
 
 ### 1 Query and plot
 
-The **Browse** section of the Streamlit app is the interface for querying and visualizing the SRF database stored in `data/srf_database.db`.
+The **Browse** section of the Streamlit app is the interface for querying and visualizing the SRF database stored in **data/srf_database.db**.
 
 This interface allows you to:
 
@@ -44,9 +44,9 @@ This interface is ideal for data exploration and visualization of stored SRF cav
 
 ### 2 New data
 
-The **Create** page provides a guided interface to generate a `.zip` archive containing metadata, raw data, and optional images for a new SRF cavity experiment. This archive is formatted to be compatible with the database update script (`collect_database.py`).
+The **Create** page provides a guided interface to generate a **.zip** archive containing metadata, raw data, and optional images for a new SRF cavity experiment. This archive is formatted to be compatible with the database update script (**collect_database.py**).
 
-**Un-zip it** before placing in the `data` folder
+**Un-zip it** before placing in the **data** folder
 
 Steps to use:
 
@@ -63,6 +63,6 @@ Steps to use:
    Check the "Attach images" box to upload one or more PNG or JPEG images (e.g., plots, photos). You can reorder or remove images before packaging.
 
 5. **Generate and Download**  
-   Click "Generate and Download Data ZIP" to create a `.zip` file containing all entered information. Use this file with `collect_database.py` to insert it into the main database.
+   Click "Generate and Download Data ZIP" to create a **.zip** file containing all entered information. Use this file with **collect_database.py** to insert it into the main database.
 
-   **Un-zip it** before placing in the `data` folder
+   **Un-zip it** before placing in the **data** folder
