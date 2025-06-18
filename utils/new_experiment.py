@@ -13,30 +13,25 @@ def move_item_up(list_name, index):
     if index > 0:
         items[index - 1], items[index] = items[index], items[index - 1]
     st.session_state[list_name] = items
-    st.rerun()
 
 def move_item_down(list_name, index):
     items = st.session_state[list_name]
     if index < len(items) - 1:
         items[index + 1], items[index] = items[index], items[index + 1]
     st.session_state[list_name] = items
-    st.rerun()
 
 def remove_item(list_name, index):
     items = st.session_state[list_name]
     items.pop(index)
     st.session_state[list_name] = items
-    st.rerun()
 
 def insert_item_after(list_name, index, default_item):
     items = st.session_state[list_name]
     items.insert(index + 1, default_item)
     st.session_state[list_name] = items
-    st.rerun()
 
 def append_item(list_name, default_item):
     st.session_state[list_name].append(default_item)
-    st.rerun()
 
 # --- Main App ---
 def create_and_download():
@@ -57,9 +52,10 @@ def create_and_download():
     if "proc_steps" not in st.session_state:
         st.session_state.proc_steps = []
 
-    st.session_state.proc_enabled = st.checkbox("Define processing steps", value=st.session_state.proc_enabled)
+    # Use key only, no value= to avoid lag
+    proc_enabled = st.checkbox("Define processing steps", key="proc_enabled")
 
-    if st.session_state.proc_enabled:
+    if proc_enabled:
         for i, step in enumerate(st.session_state.proc_steps):
             with st.expander(f"Processing Step {i+1}", expanded=True):
                 col1, col2 = st.columns(2)
@@ -67,8 +63,14 @@ def create_and_download():
                     step['process_type'] = st.text_input(f"Process Type {i+1}", value=step.get("process_type", ""), key=f"ptype_{i}")
                     step['tags'] = st.text_input(f"Tags {i+1}", value=step.get("tags", ""), key=f"tags_{i}")
                 with col2:
-                    step['temperature C'] = st.number_input(f"Temperature C {i+1}", value=step.get("temperature C"), key=f"temp_{i}", format="%.2f")
-                    step['duration h'] = st.number_input(f"Duration h {i+1}", value=step.get("duration h"), key=f"dur_{i}", format="%.2f")
+                    step['temperature C'] = st.number_input(f"Temperature C {i+1}",
+                                                            value=step.get("temperature C", 0.0),
+                                                            key=f"temp_{i}",
+                                                            format="%.2f")
+                    step['duration h'] = st.number_input(f"Duration h {i+1}",
+                                                         value=step.get("duration h", 0.0),
+                                                         key=f"dur_{i}",
+                                                         format="%.2f")
                 step['description'] = st.text_input(f"Description {i+1}", value=step.get("description", ""), key=f"desc_{i}")
 
                 col1, col2, col3, col4 = st.columns(4)
@@ -104,12 +106,12 @@ def create_and_download():
 3820892610.073\t293.640\t986.690\t648833686.000\t55326.000\t648861348.410\t11727.964\t648889012.000\t76.549\t648861348.410
 3820892612.590\t293.614\t986.990\t648833686.000\t55326.000\t648861348.410\t11727.964\t648889012.000\t76.549\t648861348.410"""
 
-    st.session_state.raw_data_enabled = st.checkbox("Include Raw Data", value=st.session_state.raw_data_enabled)
+    raw_data_enabled = st.checkbox("Include Raw Data", key="raw_data_enabled")
 
     raw_data_text = ""
     filename_base = experiment_name.replace(" ", "_")
 
-    if st.session_state.raw_data_enabled:
+    if raw_data_enabled:
         filename_base = st.text_input("Base filename (without extension)", value=filename_base)
         raw_data_text = st.text_area("Raw data text", height=200, value=st.session_state.raw_data_text, key="raw_text_area")
 
@@ -119,14 +121,19 @@ def create_and_download():
     if "image_files" not in st.session_state:
         st.session_state.image_files = []
 
-    st.session_state.images_enabled = st.checkbox("Attach images (PNG/JPEG)", value=st.session_state.images_enabled)
+    images_enabled = st.checkbox("Attach images (PNG/JPEG)", key="images_enabled")
 
-    if st.session_state.images_enabled:
+    if images_enabled:
+        # For existing images
         for i in range(len(st.session_state.image_files)):
             with st.expander(f"Image {i+1}", expanded=True):
-                st.session_state.image_files[i] = st.file_uploader(
+                uploaded_file = st.file_uploader(
                     f"Upload Image {i+1}", type=["png", "jpg", "jpeg"], key=f"image_upload_{i}"
                 )
+                # Update the image file if user uploaded a new one
+                if uploaded_file is not None:
+                    st.session_state.image_files[i] = uploaded_file
+                # Buttons to reorder/remove/add images
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
                     st.button(f"⬆️ Move Up Image {i+1}", key=f"img_up_{i}", on_click=move_item_up, args=("image_files", i))
@@ -136,6 +143,8 @@ def create_and_download():
                     st.button(f"❌ Remove Image {i+1}", key=f"img_remove_{i}", on_click=remove_item, args=("image_files", i))
                 with col4:
                     st.button(f"➕ Add Image After {i+1}", key=f"img_add_after_{i}", on_click=insert_item_after, args=("image_files", i, None))
+
+        # Button to add a new empty slot for image upload
         st.button("➕ Add Another Image", on_click=append_item, args=("image_files", None))
 
     # --- Generate and Download ZIP ---
@@ -143,7 +152,7 @@ def create_and_download():
         if not filename_base:
             st.error("Please enter a base filename.")
             return
-        if st.session_state.raw_data_enabled and not raw_data_text.strip():
+        if raw_data_enabled and not raw_data_text.strip():
             st.error("Raw data text cannot be empty.")
             return
 
@@ -156,7 +165,7 @@ def create_and_download():
             "processing_steps": []
         }
 
-        if st.session_state.proc_enabled:
+        if proc_enabled:
             for step in st.session_state.proc_steps:
                 cleaned_step = {
                     k: (v if v not in [None, 0, 0.0, ""] else None)
@@ -168,10 +177,10 @@ def create_and_download():
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as zf:
             zf.writestr(f"metadata.json", json.dumps(metadata, indent=2))
-            if st.session_state.raw_data_enabled:
+            if raw_data_enabled:
                 zf.writestr(f"{filename_base}_data.txt", raw_data_text)
 
-            if st.session_state.images_enabled:
+            if images_enabled:
                 for idx, img_file in enumerate(st.session_state.image_files):
                     if img_file is not None:
                         ext = img_file.name.split('.')[-1]
