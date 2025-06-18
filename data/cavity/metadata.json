@@ -1,0 +1,19 @@
+{
+  "experiment_name": "cavity",
+  "lab_name": "FNAL",
+  "description": "Lore lipsium (data)",
+  "date": "2025-01-28",
+  "article_url": "https://arxiv.org/abs/2401.12345",
+  "processing_steps": [
+    {
+      "process_type": "asd",
+      "tags": "EP"
+    },
+    {
+      "process_type": "asdwrg",
+      "temperature C": 50.0,
+      "duration h": 50.0,
+      "tags": "midT"
+    }
+  ]
+}

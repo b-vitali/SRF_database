@@ -1,3 +1,6 @@
+# new_experiment.py
+# streamlit interafe to create and download a zip with a new experiment
+ 
 import streamlit as st
 import io
 import json
@@ -164,7 +167,7 @@ def create_and_download():
 
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as zf:
-            zf.writestr(f"{filename_base}_metadata.json", json.dumps(metadata, indent=2))
+            zf.writestr(f"metadata.json", json.dumps(metadata, indent=2))
             if st.session_state.raw_data_enabled:
                 zf.writestr(f"{filename_base}_data.txt", raw_data_text)
 

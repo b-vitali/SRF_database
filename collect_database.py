@@ -1,10 +1,15 @@
+# collect_database.py
+# Python/SQL script to collect the files from ./data in a database
+ 
 import sqlite3
 import pandas as pd
 import os
 import json
 
+DATABASE_PATH = os.path.join("data", "srf_database.db")
+
 def create_database():
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
     # Create experiments table
@@ -24,16 +29,9 @@ def create_database():
         CREATE TABLE IF NOT EXISTS data (
             data_id INTEGER PRIMARY KEY AUTOINCREMENT,
             experiment_id INTEGER,
-            Time REAL,
-            Temp REAL,
-            MKS1000 REAL,
-            LowerEdge1 REAL,
-            Bandwidth REAL,
-            Freq_raw REAL,
-            Q0 REAL,
-            LowerEdge2 REAL,
-            Loss REAL,
-            Max_Freq REAL,
+            row_index INTEGER,
+            column_name TEXT,
+            value REAL,
             FOREIGN KEY (experiment_id) REFERENCES experiments(experiment_id)
         );
     ''')
@@ -69,7 +67,7 @@ def create_database():
 
 
 def insert_experiment_metadata(experiment_name, lab_name, description, date, article_url=None):
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
     # Check if metadata already exists
@@ -90,28 +88,25 @@ def insert_experiment_metadata(experiment_name, lab_name, description, date, art
 
 
 def insert_csv_to_db(csv_file, experiment_id):
-    df = pd.read_csv(csv_file, sep=r'\s+')
-    df.columns = ["Time", "Temp", "MKS1000", "LowerEdge1", "Bandwidth", "Freq_raw", "Q0", "LowerEdge2", "Loss", "Max_Freq"]
+    df = pd.read_csv(csv_file, sep=r'\s+|,', engine='python')  # supports both space and comma
+    df.reset_index(drop=True, inplace=True)
 
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
-    for _, row in df.iterrows():
-        cursor.execute('''
-            INSERT INTO data (experiment_id, Time, Temp, MKS1000, LowerEdge1, Bandwidth, Freq_raw, Q0, LowerEdge2, Loss, Max_Freq)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            experiment_id, row['Time'], row['Temp'], row['MKS1000'],
-            row['LowerEdge1'], row['Bandwidth'], row['Freq_raw'],
-            row['Q0'], row['LowerEdge2'], row['Loss'], row['Max_Freq']
-        ))
+    for row_index, row in df.iterrows():
+        for col_name, value in row.items():
+            cursor.execute('''
+                INSERT INTO data (experiment_id, row_index, column_name, value)
+                VALUES (?, ?, ?, ?)
+            ''', (experiment_id, row_index, col_name, value))
 
     conn.commit()
     conn.close()
 
 
 def insert_plot(experiment_id, file_path, caption=None):
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
     cursor.execute('''
@@ -142,7 +137,7 @@ def import_experiment_from_folder(folder_path):
     insert_experiment_metadata(experiment_name, lab_name, description, date, article_url)
 
     # Get experiment_id
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     cursor.execute('''
         SELECT experiment_id FROM experiments
@@ -194,7 +189,11 @@ def import_experiment_from_folder(folder_path):
 # Example Usage
 # ======================
 
-# Step 1: Create database and tables
+# Step 1: Delete existing database (if any), then create a fresh one
+if os.path.exists(DATABASE_PATH):
+    os.remove(DATABASE_PATH)
+    print(f"Deleted existing database: {DATABASE_PATH}")
+
 create_database()
 
 # Step 2: Insert experiments from folders
@@ -208,7 +207,7 @@ for entry in os.listdir(base_folder):
 
 # Step 3: Insert plot-only experiment
 insert_experiment_metadata('FG005_no_data', 'Lab B', 'Lore lipsium (plot)', '2025-04-28')
-conn = sqlite3.connect('data.db')
+conn = sqlite3.connect(DATABASE_PATH)
 cursor = conn.cursor()
 cursor.execute('SELECT experiment_id FROM experiments WHERE experiment_name = ? AND date = ?', ('FG005_no_data', '2025-04-28'))
 experiment_id = cursor.fetchone()[0]

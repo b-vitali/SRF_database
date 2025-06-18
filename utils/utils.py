@@ -1,3 +1,6 @@
+# utils.py
+# additional functions for the streamlit interafe to query and plot the SRF database
+
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -8,6 +11,9 @@ import os
 USER_CREDENTIALS = {
     "lasa": "2025"
 }
+
+def get_db_connection():
+    return sqlite3.connect(os.path.join("data", "srf_database.db"))
 
 # Function to handle user login
 def login():
@@ -35,7 +41,7 @@ def login():
 
 # Load experiments metadata from the database
 def load_experiments():
-    conn = sqlite3.connect('data.db')
+    conn = get_db_connection()
     query = "SELECT * FROM experiments"
     df = pd.read_sql(query, conn)
     conn.close()
@@ -43,15 +49,19 @@ def load_experiments():
 
 # Load data for a specific experiment
 def load_data_for_experiment(experiment_id):
-    conn = sqlite3.connect('data.db')
+    conn = get_db_connection()
     query = f"SELECT * FROM data WHERE experiment_id = {experiment_id}"
     df = pd.read_sql(query, conn)
     conn.close()
-    return df
+    
+    # Pivot to restore wide format
+    df_pivoted = df.pivot(index='row_index', columns='column_name', values='value')
+    df_pivoted.reset_index(drop=True, inplace=True)
+    return df_pivoted
 
 # Load plots for a specific experiment
 def load_plots_for_experiment(experiment_id):
-    conn = sqlite3.connect('data.db')
+    conn = get_db_connection()
     query = f"SELECT * FROM plots WHERE experiment_id = {experiment_id}"
     df = pd.read_sql(query, conn)
     conn.close()
@@ -59,7 +69,7 @@ def load_plots_for_experiment(experiment_id):
 
 # Load processing steps for a specific experiment, ordered by step index
 def load_processing_steps_for_experiment(experiment_id):
-    conn = sqlite3.connect('data.db')
+    conn = get_db_connection()
     query = f"SELECT * FROM processing_steps WHERE experiment_id = {experiment_id} ORDER BY step_index ASC"
     df = pd.read_sql(query, conn)
     conn.close()
@@ -67,7 +77,7 @@ def load_processing_steps_for_experiment(experiment_id):
 
 # Get experiment IDs where processing steps contain a specific tag
 def get_experiments_by_processing_tag(tag):
-    conn = sqlite3.connect('data.db')
+    conn = get_db_connection()
     query = """
         SELECT DISTINCT experiment_id
         FROM processing_steps
@@ -79,7 +89,7 @@ def get_experiments_by_processing_tag(tag):
 
 # Get all distinct processing tags from the processing_steps table
 def get_all_processing_tags():
-    conn = sqlite3.connect("data.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT DISTINCT tags FROM processing_steps")
     rows = cursor.fetchall()
@@ -118,7 +128,7 @@ def filter_experiments(df):
 # Filter experiment data by selected column and value/range with flexible input
 def filter_data(df):
     st.write("### Filter Data")
-    column_name = st.selectbox("Select column to filter", df.columns, index=df.columns.get_loc("Temp"))
+    column_name = st.selectbox("Select column to filter", df.columns)
 
     if df[column_name].dtype == 'object':
         unique_values = df[column_name].unique()
@@ -159,8 +169,8 @@ def filter_data(df):
 def plot_data(df):
     st.write("### Plot Data")
     cols = st.columns(2)
-    x_column = cols[0].selectbox("Select x-axis column", df.columns, index=df.columns.get_loc("Temp"))
-    y_column = cols[0].selectbox("Select y-axis column", df.columns, index=df.columns.get_loc("Q0"))
+    x_column = cols[0].selectbox("Select x-axis column", df.columns)
+    y_column = cols[0].selectbox("Select y-axis column", df.columns)
     use_log_scale = cols[0].checkbox("Use log scale for y-axis", value=False)
 
     fig, ax = plt.subplots()

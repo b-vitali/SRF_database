@@ -1,0 +1,23 @@
+{
+  "experiment_name": "cavity2",
+  "lab_name": "Lasa",
+  "description": "some random data to test",
+  "date": "2025-01-28",
+  "article_url": "another/article",
+  "processing_steps": [
+    {
+      "process_type": "first",
+      "tags": "EP"
+    },
+    {
+      "process_type": "second",
+      "temperature C": 50.0,
+      "duration h": 50.0,
+      "tags": "Cold EP"
+    },
+    {
+      "process_type": "third",
+      "tags": "Cold EP"
+    }
+  ]
+}

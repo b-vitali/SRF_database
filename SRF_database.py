@@ -1,17 +1,20 @@
+# SRF_database.py
+# streamlit interafe to query and plot the SRF database
+
 import streamlit as st
 import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-from new_experiment import create_and_download
-from utils import *
+from utils.new_experiment import create_and_download
+from utils.utils import *
 
 # Main function controlling the app workflow
 def main():
     st.title("SRF: Database")
     options = ["Browse", "Create", "README"]
-    selection = st.segmented_control("", options, selection_mode="single", default="Browse")
+    selection = st.segmented_control("Navigation", options, selection_mode="single", default="Browse")
 
     if selection == "Browse":
         # Check login status; if not logged in, show login page
@@ -105,8 +108,8 @@ def main():
         create_and_download()
 
     elif selection == "README":
-        # Leggi il contenuto del file README.md
-        with open("README.md", "r", encoding="utf-8") as file:
+        # Leggi il contenuto del file streamlit_README.md
+        with open("utils/streamlit_README.md", "r", encoding="utf-8") as file:
             readme_content = file.read()
 
         # Mostra il contenuto con st.markdown (interpretando il Markdown)
