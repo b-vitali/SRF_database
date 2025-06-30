@@ -1,0 +1,31 @@
+{
+  "EP": {
+    "tags": ["EP","warmEP", "coldEP"],
+    "parameters": {
+      "T [C]": 0.0,
+      "Thick [µm]": 0.0
+    }
+  },
+  "baking": {
+    "tags": ["baking","midT", "2step", "lowT"],
+    "parameters": {
+      "T [C]": 0.0,
+      "Time [h]": 0.0
+    }
+  },
+  "BCP": {
+    "tags": ["BCP"],
+    "parameters": {
+      "T [C]": 0.0,
+      "Time [h]": 0.0
+    }
+  },
+  "Else": {
+    "tags": ["Else"],
+    "parameters": {
+      "T [C]": 0.0,
+      "Thick [µm]": 0.0,
+      "Time [h]": 0.0
+    }
+  }
+}

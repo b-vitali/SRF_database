@@ -169,9 +169,9 @@ def filter_data(df):
 def plot_data(df):
     st.write("### Plot Data")
     cols = st.columns(2)
-    x_column = cols[0].selectbox("Select x-axis column", df.columns)
-    y_column = cols[0].selectbox("Select y-axis column", df.columns)
-    use_log_scale = cols[0].checkbox("Use log scale for y-axis", value=False)
+    x_column = cols[0].selectbox("Select x-axis column", df.columns, key="x_col")
+    y_column = cols[0].selectbox("Select y-axis column", df.columns, key="y_col")
+    use_log_scale = cols[0].checkbox("Use log scale for y-axis", value=False, key="log_scale")
 
     fig, ax = plt.subplots()
     ax.scatter(df[x_column], df[y_column])
@@ -180,3 +180,6 @@ def plot_data(df):
     if use_log_scale:
         ax.set_yscale('log')
     cols[1].pyplot(fig)
+    
+    # Return selected data for potential comparison overlay
+    return x_column, y_column, use_log_scale, df[[x_column, y_column]]

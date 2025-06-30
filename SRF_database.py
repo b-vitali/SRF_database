@@ -85,12 +85,54 @@ def main():
             else:
                 st.info("No data available to filter.")
 
-            # Plot data if available
-            if not filtered_data_df.empty:
-                if st.checkbox("Plot some data"):
-                    plot_data(filtered_data_df)
-            else:
-                st.info("No data available to plot.")
+
+        # ... after filtered_data_df is defined and ready ...
+
+        if not filtered_data_df.empty:
+            if st.checkbox("Plot some data"):
+                x_col, y_col, log_scale, plot_df = plot_data(filtered_data_df)
+
+                # Initialize comparison state on first use
+                if "compare_plots" not in st.session_state:
+                    st.session_state.compare_plots = []
+
+                # Buttons for compare and clear
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("Compare"):
+                        # Add current plot data to comparison list
+                        st.session_state.compare_plots.append({
+                            "x_col": x_col,
+                            "y_col": y_col,
+                            "log_scale": log_scale,
+                            "data": plot_df
+                        })
+                        st.success("Plot added to comparison.")
+
+                with col2:
+                    if st.button("Close Compare"):
+                        st.session_state.compare_plots = []
+                        st.success("Comparison cleared.")
+
+            # If there are comparison plots, show the overlay plot
+            if "compare_plots" in st.session_state and st.session_state.compare_plots:
+                st.write("### Comparison Overlay")
+                fig, ax = plt.subplots()
+
+                for i, plot_info in enumerate(st.session_state.compare_plots):
+                    data = plot_info["data"]
+                    ax.scatter(data[plot_info["x_col"]], data[plot_info["y_col"]],
+                            label=f"Plot {i+1}: {plot_info['x_col']} vs {plot_info['y_col']}")
+
+                ax.set_xlabel(st.session_state.compare_plots[0]["x_col"])  # Use first plot x label
+                ax.set_ylabel(st.session_state.compare_plots[0]["y_col"])  # Use first plot y label
+
+                # If any plot uses log scale, set it
+                if any(p["log_scale"] for p in st.session_state.compare_plots):
+                    ax.set_yscale('log')
+
+                ax.legend()
+                st.pyplot(fig)
 
             # Load and display associated png plots if available
             plots_df = load_plots_for_experiment(experiment_id)

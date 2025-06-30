@@ -1,6 +1,5 @@
 # new_experiment.py
-# streamlit interafe to create and download a zip with a new experiment
- 
+# streamlit interface to create and download a zip with a new experiment
 import streamlit as st
 import io
 import json
@@ -33,6 +32,24 @@ def insert_item_after(list_name, index, default_item):
 def append_item(list_name, default_item):
     st.session_state[list_name].append(default_item)
 
+# --- Load processes from JSON ---
+@st.cache_data
+def load_processes():
+    with open("utils/processes.json", "r", encoding="utf-8") as f:
+        return json.load(f)
+
+processes = load_processes()
+
+# Prepare default step tag for "Else"
+default_tags = processes["Else"].get("tags", [])
+default_tag = default_tags[0] if default_tags else None
+default_step = {
+    "process_type": "",
+    "description": "",
+    "tag": default_tag,
+    **{k: 0.0 for k in processes["Else"]["parameters"]}
+}
+
 # --- Main App ---
 def create_and_download():
     st.title("Add new Data Set")
@@ -52,27 +69,70 @@ def create_and_download():
     if "proc_steps" not in st.session_state:
         st.session_state.proc_steps = []
 
-    # Use key only, no value= to avoid lag
     proc_enabled = st.checkbox("Define processing steps", key="proc_enabled")
 
     if proc_enabled:
         for i, step in enumerate(st.session_state.proc_steps):
             with st.expander(f"Processing Step {i+1}", expanded=True):
-                col1, col2 = st.columns(2)
-                with col1:
-                    step['process_type'] = st.text_input(f"Process Type {i+1}", value=step.get("process_type", ""), key=f"ptype_{i}")
-                    step['tags'] = st.text_input(f"Tags {i+1}", value=step.get("tags", ""), key=f"tags_{i}")
-                with col2:
-                    step['temperature C'] = st.number_input(f"Temperature C {i+1}",
-                                                            value=step.get("temperature C", 0.0),
-                                                            key=f"temp_{i}",
-                                                            format="%.2f")
-                    step['duration h'] = st.number_input(f"Duration h {i+1}",
-                                                         value=step.get("duration h", 0.0),
-                                                         key=f"dur_{i}",
-                                                         format="%.2f")
-                step['description'] = st.text_input(f"Description {i+1}", value=step.get("description", ""), key=f"desc_{i}")
 
+                st.markdown("**Select Process Type**")
+                cols = st.columns(len(processes))
+                current_type = step.get("process_type", "")
+
+                # Process type pills/buttons (single select)
+                for idx, proc_name in enumerate(processes.keys()):
+                    btn_label = proc_name
+                    if cols[idx].button(btn_label, key=f"ptype_btn_{i}_{proc_name}"):
+                        step["process_type"] = proc_name
+                        # Select first tag of this process by default, or None if no tags
+                        tags_list = processes[proc_name].get("tags", [])
+                        step["tag"] = tags_list[0] if tags_list else None
+                        # Initialize parameters from JSON defaults
+                        for param in processes[proc_name]["parameters"]:
+                            step[param] = processes[proc_name]["parameters"][param]
+
+                selected_type = step.get("process_type", "")
+                if selected_type:
+                    st.markdown(f"**Selected Process Type:** `{selected_type}`")
+                else:
+                    st.markdown("*No process type selected yet*")
+
+                # --- Tag Selection (Single Tag as Pills) ---
+                all_tags = processes.get(selected_type, {}).get("tags", [])
+                if "tag" not in step:
+                    step["tag"] = None
+
+                st.markdown("**Select One Tag**")
+                tag_cols = st.columns(max(1, len(all_tags)))
+                for j, tag in enumerate(all_tags):
+                    tag_label = tag
+                    if tag_cols[j].button(tag_label, key=f"tag_{i}_{j}"):
+                        if step["tag"] == tag:
+                            step["tag"] = None  # Deselect if clicked again
+                        else:
+                            step["tag"] = tag
+
+                st.markdown(f"**Selected Tag:** `{step['tag']}`")
+
+                # --- Parameters ---
+                st.markdown("**Parameters**")
+                for param_name in processes.get(selected_type, {}).get("parameters", {}):
+                    default_val = step.get(param_name, 0.0)
+                    step[param_name] = st.number_input(
+                        f"{param_name}",
+                        value=default_val,
+                        key=f"param_{i}_{param_name}",
+                        format="%.2f"
+                    )
+
+                # Description text input
+                step['description'] = st.text_input(
+                    f"Description {i+1}",
+                    value=step.get("description", ""),
+                    key=f"desc_{i}"
+                )
+
+                # --- Controls to reorder / remove / add steps ---
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
                     st.button(f"⬆️ Move Up {i+1}", key=f"up_step_{i}", on_click=move_item_up, args=("proc_steps", i))
@@ -81,22 +141,10 @@ def create_and_download():
                 with col3:
                     st.button(f"❌ Remove Step {i+1}", key=f"remove_step_{i}", on_click=remove_item, args=("proc_steps", i))
                 with col4:
-                    st.button(f"➕ Add Step After {i+1}", key=f"add_after_step_{i}",
-                              on_click=insert_item_after,
-                              args=("proc_steps", i, {
-                                  "process_type": "",
-                                  "description": "",
-                                  "temperature C": 0.0,
-                                  "duration h": 0.0,
-                                  "tags": ""
-                              }))
-        st.button("➕ Add Step", on_click=append_item, args=("proc_steps", {
-            "process_type": "",
-            "description": "",
-            "temperature C": 0.0,
-            "duration h": 0.0,
-            "tags": ""
-        }))
+                    st.button(f"➕ Add Step After {i+1}", key=f"add_after_step_{i}", on_click=insert_item_after,
+                              args=("proc_steps", i, default_step))
+
+        st.button("➕ Add Step", on_click=append_item, args=("proc_steps", default_step))
 
     # --- Raw Data ---
     if "raw_data_enabled" not in st.session_state:
@@ -124,16 +172,13 @@ def create_and_download():
     images_enabled = st.checkbox("Attach images (PNG/JPEG)", key="images_enabled")
 
     if images_enabled:
-        # For existing images
         for i in range(len(st.session_state.image_files)):
             with st.expander(f"Image {i+1}", expanded=True):
                 uploaded_file = st.file_uploader(
                     f"Upload Image {i+1}", type=["png", "jpg", "jpeg"], key=f"image_upload_{i}"
                 )
-                # Update the image file if user uploaded a new one
                 if uploaded_file is not None:
                     st.session_state.image_files[i] = uploaded_file
-                # Buttons to reorder/remove/add images
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
                     st.button(f"⬆️ Move Up Image {i+1}", key=f"img_up_{i}", on_click=move_item_up, args=("image_files", i))
@@ -144,7 +189,6 @@ def create_and_download():
                 with col4:
                     st.button(f"➕ Add Image After {i+1}", key=f"img_add_after_{i}", on_click=insert_item_after, args=("image_files", i, None))
 
-        # Button to add a new empty slot for image upload
         st.button("➕ Add Another Image", on_click=append_item, args=("image_files", None))
 
     # --- Generate and Download ZIP ---
@@ -168,7 +212,7 @@ def create_and_download():
         if proc_enabled:
             for step in st.session_state.proc_steps:
                 cleaned_step = {
-                    k: (v if v not in [None, 0, 0.0, ""] else None)
+                    k: (v if v not in [None, 0, 0.0, "", []] else None)
                     for k, v in step.items()
                 }
                 cleaned_step = {k: v for k, v in cleaned_step.items() if v is not None}
@@ -176,10 +220,9 @@ def create_and_download():
 
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as zf:
-            zf.writestr(f"metadata.json", json.dumps(metadata, indent=2))
+            zf.writestr("metadata.json", json.dumps(metadata, indent=2))
             if raw_data_enabled:
                 zf.writestr(f"{filename_base}_data.txt", raw_data_text)
-
             if images_enabled:
                 for idx, img_file in enumerate(st.session_state.image_files):
                     if img_file is not None:
