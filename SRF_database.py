@@ -28,7 +28,7 @@ def main():
         experiments_df = load_experiments()
 
         # Filter experiments by processing tags ("recipes")
-        if st.checkbox("Filter by *recepies*"):
+        if st.checkbox("Filter by *recipes*"):
             all_tags = get_all_processing_tags()
             selected_tags = st.pills("Processes applied in the history of the cavity", all_tags, selection_mode="multi")
             if selected_tags:
@@ -59,7 +59,7 @@ def main():
             # Show processing steps if available
             processing_df = load_processing_steps_for_experiment(experiment_id)
             if not processing_df.empty:
-                if st.checkbox("Show Processing Steps Table"):
+                if st.checkbox("Show Processing Steps"):
                     st.write("### Processing Steps")
                     selected_columns = ["process_type","description","temperature_c","duration_h","tags"]
                     st.dataframe(processing_df[selected_columns])
@@ -69,7 +69,7 @@ def main():
             # Show raw data if available
             experiment_data_df = load_data_for_experiment(experiment_id)
             if not experiment_data_df.empty:
-                if st.checkbox("Show Raw Data Table"):
+                if st.checkbox("Show Raw Data"):
                     st.write(f"### Data for Experiment: {experiment_name}")
                     selected_columns = st.multiselect("Select columns to display", experiment_data_df.columns.tolist(), default=experiment_data_df.columns.tolist(), key="raw")
                     st.dataframe(experiment_data_df[selected_columns])
@@ -80,7 +80,7 @@ def main():
 
             # Optionally filter raw data
             if not experiment_data_df.empty:
-                if st.checkbox("Filter the raw data"):
+                if st.checkbox("Filter raw data"):
                     filtered_data_df = filter_data(experiment_data_df)
             else:
                 st.info("No data available to filter.")
@@ -89,7 +89,7 @@ def main():
         # ... after filtered_data_df is defined and ready ...
 
         if not filtered_data_df.empty:
-            if st.checkbox("Plot some data"):
+            if st.checkbox("Plot data"):
                 x_col, y_col, log_scale, plot_df = plot_data(filtered_data_df)
 
                 # Initialize comparison state on first use
@@ -102,6 +102,7 @@ def main():
                     if st.button("Compare"):
                         # Add current plot data to comparison list
                         st.session_state.compare_plots.append({
+                            "experiment_name": experiment_name,   # add this line
                             "x_col": x_col,
                             "y_col": y_col,
                             "log_scale": log_scale,
@@ -122,11 +123,7 @@ def main():
                 for i, plot_info in enumerate(st.session_state.compare_plots):
                     data = plot_info["data"]
                     ax.scatter(data[plot_info["x_col"]], data[plot_info["y_col"]],
-                            label=f"Plot {i+1}: {plot_info['x_col']} vs {plot_info['y_col']}")
-
-                ax.set_xlabel(st.session_state.compare_plots[0]["x_col"])  # Use first plot x label
-                ax.set_ylabel(st.session_state.compare_plots[0]["y_col"])  # Use first plot y label
-
+                            label=f"{plot_info['experiment_name']}: {plot_info['y_col']} vs {plot_info['x_col']}")
                 # If any plot uses log scale, set it
                 if any(p["log_scale"] for p in st.session_state.compare_plots):
                     ax.set_yscale('log')

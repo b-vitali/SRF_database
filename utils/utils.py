@@ -1,5 +1,5 @@
 # utils.py
-# additional functions for the streamlit interafe to query and plot the SRF database
+# additional functions for the streamlit interface to query and plot the SRF database
 
 import streamlit as st
 import sqlite3
