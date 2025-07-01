@@ -92,7 +92,12 @@ def new_experiment_page():
                     st.session_state.proc_steps.append(step.copy())
 
         for i, step in enumerate(st.session_state.proc_steps):
-            with st.expander(f"Processing Step {i+1}", expanded=True):
+            process_type = step.get("process_type", "None")
+            tag = step.get("tag", "None")
+            summary = f"{process_type} : {tag}" if process_type else "No process/tag selected"
+            expander_title = f"Processing Step {i+1} — {summary}"
+
+            with st.expander(expander_title, expanded=True):
 
                 st.markdown("**Select Process Type**")
                 cols = st.columns(len(processes))
@@ -109,6 +114,7 @@ def new_experiment_page():
                         # Initialize parameters from JSON defaults
                         for param in processes[proc_name]["parameters"]:
                             step[param] = processes[proc_name]["parameters"][param]
+                        st.rerun()
 
                 selected_type = step.get("process_type", "")
                 if selected_type:
@@ -123,13 +129,14 @@ def new_experiment_page():
 
                 st.markdown("**Select One Tag**")
                 tag_cols = st.columns(max(1, len(all_tags)))
-                for j, tag in enumerate(all_tags):
-                    tag_label = tag
+                for j, tag_item in enumerate(all_tags):
+                    tag_label = tag_item
                     if tag_cols[j].button(tag_label, key=f"tag_{i}_{j}"):
-                        if step["tag"] == tag:
+                        if step["tag"] == tag_item:
                             step["tag"] = None  # Deselect if clicked again
                         else:
-                            step["tag"] = tag
+                            step["tag"] = tag_item
+                        st.rerun()
 
                 st.markdown(f"**Selected Tag:** `{step['tag']}`")
 
@@ -206,9 +213,9 @@ def new_experiment_page():
                 with col3:
                     st.button(f"❌ Remove Image {i+1}", key=f"img_remove_{i}", on_click=remove_item, args=("image_files", i))
                 with col4:
-                    st.button(f"➕ Add Image After {i+1}", key=f"img_add_after_{i}", on_click=insert_item_after, args=("image_files", i, None))
+                    st.button(f"➕ Add Image After {i+1}", key=f"img_add_after_{i}", on_click=insert_item_after, args=("image_files", i))
 
-        st.button("➕ Add Another Image", on_click=append_item, args=("image_files", None))
+        st.button("➕ Add Another Image", on_click=append_item, args=("image_files",))
 
     # --- Generate and Download ZIP ---
     if st.button("Generate and Download Data ZIP"):
@@ -256,3 +263,6 @@ def new_experiment_page():
             file_name=f"{filename_base}.zip",
             mime="application/zip"
         )
+
+if __name__ == "__main__":
+    new_experiment_page()
