@@ -40,6 +40,14 @@ def load_processes():
 
 processes = load_processes()
 
+# --- Load presets of processes from JSON ---
+@st.cache_data
+def load_presets():
+    with open("utils/presets.json", "r", encoding="utf-8") as f:
+        return json.load(f)
+
+PREDEFINED_CHAINS = load_presets()
+
 # Prepare default step tag for "Else"
 default_tags = processes["Else"].get("tags", [])
 default_tag = default_tags[0] if default_tags else None
@@ -72,6 +80,14 @@ def create_and_download():
     proc_enabled = st.checkbox("Define processing steps", key="proc_enabled")
 
     if proc_enabled:
+        # Add predefined process chain
+        preset_names = list(PREDEFINED_CHAINS.keys())
+        selected_preset = st.selectbox("📦 Add Predefined Process Chain", ["None"] + preset_names)
+        if selected_preset != "None":
+            if st.button(f"➕ Insert '{selected_preset}' Chain"):
+                for step in PREDEFINED_CHAINS[selected_preset]:
+                    st.session_state.proc_steps.append(step.copy())
+
         for i, step in enumerate(st.session_state.proc_steps):
             with st.expander(f"Processing Step {i+1}", expanded=True):
 

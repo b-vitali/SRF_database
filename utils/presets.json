@@ -1,0 +1,50 @@
+{
+  "Baseline_ESS": [
+    {
+      "process_type": "baking",
+      "tag": "lowT",
+      "description": "900C baking step",
+      "T [C]": 900.0,
+      "Time [h]": 3.0
+    },
+    {
+      "process_type": "BCP",
+      "tag": "BCP",
+      "description": "BCP cleaning step",
+      "T [C]": 20.0,
+      "Time [h]": 1.0
+    },
+    {
+      "process_type": "EP",
+      "tag": "coldEP",
+      "description": "Final cold EP",
+      "T [C]": 15.0,
+      "Thick [µm]": 5.0
+    }
+  ],
+  
+  "Fast_Turnaround": [
+    {
+      "process_type": "EP",
+      "tag": "warmEP",
+      "description": "Initial EP to clean surface",
+      "T [C]": 30.0,
+      "Thick [µm]": 10.0
+    },
+    {
+      "process_type": "baking",
+      "tag": "midT",
+      "description": "Quick 120C bake to remove water",
+      "T [C]": 120.0,
+      "Time [h]": 2.0
+    },
+    {
+      "process_type": "Else",
+      "tag": "Else",
+      "description": "Final prep step (clean room wait)",
+      "T [C]": 22.0,
+      "Thick [µm]": 0.0,
+      "Time [h]": 1.5
+    }
+  ]
+}
