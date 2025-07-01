@@ -33,7 +33,6 @@ def append_item(list_name, default_item):
     st.session_state[list_name].append(default_item)
 
 # --- Load processes from JSON ---
-@st.cache_data
 def load_processes():
     with open("utils/processes.json", "r", encoding="utf-8") as f:
         return json.load(f)
@@ -41,7 +40,6 @@ def load_processes():
 processes = load_processes()
 
 # --- Load presets of processes from JSON ---
-@st.cache_data
 def load_presets():
     with open("utils/presets.json", "r", encoding="utf-8") as f:
         return json.load(f)
@@ -91,44 +89,39 @@ def new_experiment_page():
         for i, step in enumerate(st.session_state.proc_steps):
             with st.expander(f"Processing Step {i+1}", expanded=True):
 
-                st.markdown("**Select Process Type**")
-                cols = st.columns(len(processes))
+                col_proc, col_tag = st.columns(2)
+
+                # Process Type dropdown
+                process_types = list(processes.keys())
                 current_type = step.get("process_type", "")
+                selected_type = col_proc.selectbox(
+                    "Process Type",
+                    options=process_types,
+                    index=process_types.index(current_type) if current_type in process_types else 0,
+                    key=f"process_type_{i}"
+                )
+                step["process_type"] = selected_type
 
-                # Process type pills/buttons (single select)
-                for idx, proc_name in enumerate(processes.keys()):
-                    btn_label = proc_name
-                    if cols[idx].button(btn_label, key=f"ptype_btn_{i}_{proc_name}"):
-                        step["process_type"] = proc_name
-                        # Select first tag of this process by default, or None if no tags
-                        tags_list = processes[proc_name].get("tags", [])
-                        step["tag"] = tags_list[0] if tags_list else None
-                        # Initialize parameters from JSON defaults
-                        for param in processes[proc_name]["parameters"]:
-                            step[param] = processes[proc_name]["parameters"][param]
+                # Default tag for the selected process type
+                available_tags = processes.get(selected_type, {}).get("tags", [])
+                if not available_tags:
+                    available_tags = ["Default"]  # fallback if no tags at all
 
-                selected_type = step.get("process_type", "")
-                if selected_type:
-                    st.markdown(f"**Selected Process Type:** `{selected_type}`")
-                else:
-                    st.markdown("*No process type selected yet*")
+                # Ensure current tag is valid; if not, set to default first tag
+                current_tag = step.get("tag", None)
+                if current_tag not in available_tags:
+                    current_tag = available_tags[0]
+                    step["tag"] = current_tag
 
-                # --- Tag Selection (Single Tag as Pills) ---
-                all_tags = processes.get(selected_type, {}).get("tags", [])
-                if "tag" not in step:
-                    step["tag"] = None
+                # Tag dropdown WITHOUT empty option
+                selected_tag = col_tag.selectbox(
+                    "Tag",
+                    options=available_tags,
+                    index=available_tags.index(current_tag),
+                    key=f"tag_{i}"
+                )
+                step["tag"] = selected_tag
 
-                st.markdown("**Select One Tag**")
-                tag_cols = st.columns(max(1, len(all_tags)))
-                for j, tag in enumerate(all_tags):
-                    tag_label = tag
-                    if tag_cols[j].button(tag_label, key=f"tag_{i}_{j}"):
-                        if step["tag"] == tag:
-                            step["tag"] = None  # Deselect if clicked again
-                        else:
-                            step["tag"] = tag
-
-                st.markdown(f"**Selected Tag:** `{step['tag']}`")
 
                 # --- Parameters ---
                 st.markdown("**Parameters**")
