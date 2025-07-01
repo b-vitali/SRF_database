@@ -59,7 +59,7 @@ default_step = {
 }
 
 # --- Main App ---
-def create_and_download():
+def new_experiment_page():
     st.title("Add new Data Set")
 
     col1, col2 = st.columns(2)
