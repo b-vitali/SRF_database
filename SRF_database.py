@@ -20,7 +20,15 @@ def main():
     - Create: Add new experimental data to the database
     - README: Show the README documentation with instructions and info
     """
-    st.title("SRF: Database")
+    LOGO_EXPAND = "utils/images/logo.png"
+    LOGO_COLLAPS = "utils/images/logo.png"
+
+    st.logo(LOGO_EXPAND, icon_image=LOGO_COLLAPS)
+    with open("utils/streamlit_README.md", "r", encoding="utf-8") as file:
+        readme_content = file.read()
+    st.sidebar.markdown(readme_content, unsafe_allow_html=True)
+    # st.title("SRF: Database")
+    st.header("SRF: Database", divider=True)
 
     # Navigation control allowing user to switch between modes/pages
     options = ["Browse", "Create", "README"]
