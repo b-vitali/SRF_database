@@ -58,7 +58,8 @@ def get_default_step():
         "process_type": first_process,
         "tag": first_tag,
         "description": "",
-        **default_params
+        **default_params,
+        "expanded": True
     }
 
 # --- Main App ---
@@ -89,7 +90,9 @@ def new_experiment_page():
         if selected_preset != "None":
             if st.button(f"➕ Insert '{selected_preset}' Chain"):
                 for step in PREDEFINED_CHAINS[selected_preset]:
-                    st.session_state.proc_steps.append(step.copy())
+                    new_step = step.copy()
+                    new_step["expanded"] = False
+                    st.session_state.proc_steps.append(new_step)
 
         for i, step in enumerate(st.session_state.proc_steps):
             process_type = step.get("process_type", "None")
@@ -97,32 +100,21 @@ def new_experiment_page():
             summary = f"{process_type} : {tag}" if process_type else "No process/tag selected"
             expander_title = f"Processing Step {i+1} — {summary}"
 
-            with st.expander(expander_title, expanded=True):
-
+            with st.expander(expander_title, expanded=step.get("expanded", True)):
                 st.markdown("**Select Process Type**")
                 cols = st.columns(len(processes))
-                current_type = step.get("process_type", "")
-
-                # Process type pills/buttons (single select)
                 for idx, proc_name in enumerate(processes.keys()):
-                    btn_label = proc_name
-                    if cols[idx].button(btn_label, key=f"ptype_btn_{i}_{proc_name}"):
+                    if cols[idx].button(proc_name, key=f"ptype_btn_{i}_{proc_name}"):
                         step["process_type"] = proc_name
-                        # Select first tag of this process by default, or None if no tags
                         tags_list = processes[proc_name].get("tags", [])
                         step["tag"] = tags_list[0] if tags_list else None
-                        # Initialize parameters from JSON defaults
                         for param in processes[proc_name]["parameters"]:
                             step[param] = processes[proc_name]["parameters"][param]
                         st.rerun()
 
                 selected_type = step.get("process_type", "")
-                if selected_type:
-                    st.markdown(f"**Selected Process Type:** `{selected_type}`")
-                else:
-                    st.markdown("*No process type selected yet*")
+                st.markdown(f"**Selected Process Type:** `{selected_type}`")
 
-                # --- Tag Selection (Single Tag as Pills) ---
                 all_tags = processes.get(selected_type, {}).get("tags", [])
                 if "tag" not in step:
                     step["tag"] = None
@@ -130,23 +122,17 @@ def new_experiment_page():
                 st.markdown("**Select One Tag**")
                 tag_cols = st.columns(max(1, len(all_tags)))
                 for j, tag_item in enumerate(all_tags):
-                    tag_label = tag_item
-                    if tag_cols[j].button(tag_label, key=f"tag_{i}_{j}"):
-                        if step["tag"] == tag_item:
-                            step["tag"] = None  # Deselect if clicked again
-                        else:
-                            step["tag"] = tag_item
+                    if tag_cols[j].button(tag_item, key=f"tag_{i}_{j}"):
+                        step["tag"] = None if step["tag"] == tag_item else tag_item
                         st.rerun()
 
                 st.markdown(f"**Selected Tag:** `{step['tag']}`")
 
-                # --- Parameters ---
                 st.markdown("**Parameters**")
                 for param_name in processes.get(selected_type, {}).get("parameters", {}):
-                    default_val = step.get(param_name, 0.0)
                     step[param_name] = st.number_input(
                         f"{param_name}",
-                        value=default_val,
+                        value=step.get(param_name, 0.0),
                         key=f"param_{i}_{param_name}",
                         format="%.2f"
                     )
@@ -167,8 +153,7 @@ def new_experiment_page():
                 with col3:
                     st.button(f"❌ Remove Step {i+1}", key=f"remove_step_{i}", on_click=remove_item, args=("proc_steps", i))
                 with col4:
-                    st.button(f"➕ Add Step After {i+1}", key=f"add_after_step_{i}", on_click=insert_item_after,
-                              args=("proc_steps", i))
+                    st.button(f"➕ Add Step After {i+1}", key=f"add_after_step_{i}", on_click=insert_item_after, args=("proc_steps", i))
 
         st.button("➕ Add Step", on_click=append_item, args=("proc_steps",))
 
@@ -181,7 +166,6 @@ def new_experiment_page():
 3820892612.590\t293.614\t986.990\t648833686.000\t55326.000\t648861348.410\t11727.964\t648889012.000\t76.549\t648861348.410"""
 
     raw_data_enabled = st.checkbox("Include Raw Data", key="raw_data_enabled")
-
     raw_data_text = ""
     filename_base = experiment_name.replace(" ", "_")
 
@@ -200,9 +184,7 @@ def new_experiment_page():
     if images_enabled:
         for i in range(len(st.session_state.image_files)):
             with st.expander(f"Image {i+1}", expanded=True):
-                uploaded_file = st.file_uploader(
-                    f"Upload Image {i+1}", type=["png", "jpg", "jpeg"], key=f"image_upload_{i}"
-                )
+                uploaded_file = st.file_uploader(f"Upload Image {i+1}", type=["png", "jpg", "jpeg"], key=f"image_upload_{i}")
                 if uploaded_file is not None:
                     st.session_state.image_files[i] = uploaded_file
                 col1, col2, col3, col4 = st.columns(4)
@@ -240,6 +222,7 @@ def new_experiment_page():
                 cleaned_step = {
                     k: (v if v not in [None, 0, 0.0, "", []] else None)
                     for k, v in step.items()
+                    if k != "expanded"
                 }
                 cleaned_step = {k: v for k, v in cleaned_step.items() if v is not None}
                 metadata["processing_steps"].append(cleaned_step)

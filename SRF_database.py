@@ -20,10 +20,9 @@ def main():
     - Create: Add new experimental data to the database
     - README: Show the README documentation with instructions and info
     """
-    LOGO_EXPAND = "utils/images/logo.png"
-    LOGO_COLLAPS = "utils/images/logo.png"
-
-    st.logo(LOGO_EXPAND, icon_image=LOGO_COLLAPS)
+    LOGO_LASA = "utils/images/logo.png"
+    LASA_LINK = "https://homelasa.mi.infn.it/en/"
+    st.logo(LOGO_LASA, icon_image=LOGO_LASA, link=LASA_LINK)
     with open("utils/streamlit_README.md", "r", encoding="utf-8") as file:
         readme_content = file.read()
     st.sidebar.markdown(readme_content, unsafe_allow_html=True)
