@@ -65,7 +65,19 @@ def get_default_step():
 # --- Main App ---
 def new_experiment_page():
     st.title("Add new Data Set")
+    
+    # --- Style to center the buttons ---
+    button_style = """
+    <style>
+    div.stButton > button {
+        width: 100%;
+        text-align: center;
+    }
+    </style>
+    """
+    st.markdown(button_style, unsafe_allow_html=True)
 
+    # --- Organize the MetaData ---
     col1, col2 = st.columns(2)
     with col1:
         experiment_name = st.text_input("Experiment Name", value="FNAL_103.1")
@@ -98,12 +110,12 @@ def new_experiment_page():
             process_type = step.get("process_type", "None")
             tag = step.get("tag", "None")
             summary = f"{process_type} : {tag}" if process_type else "No process/tag selected"
-            expander_title = f"Processing Step {i+1} — {summary}"
+            expander_title = f"**Process {i+1} — {summary}**"
 
             with st.expander(expander_title, expanded=step.get("expanded", True)):
                 colA, colB = st.columns(2)
                 with colA:
-                    # --- Process Type Selection ---
+                    # Process Type Selection
                     process_names = list(processes.keys())
                     selected_process = step.get("process_type", process_names[0] if process_names else None)
 
@@ -124,7 +136,7 @@ def new_experiment_page():
                             step[param] = val
                         st.rerun()
 
-                    # --- Tag Selection ---
+                    # Tag Selection
                     selected_tags = processes.get(step["process_type"], {}).get("tags", [])
                     current_tag = step.get("tag")
 
@@ -158,16 +170,16 @@ def new_experiment_page():
                     key=f"desc_{i}"
                 )
 
-                # --- Controls to reorder / remove / add steps ---
+                # Controls to reorder / remove / add steps
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
-                    st.button(f"⬆️ Move Up {i+1}", key=f"up_step_{i}", on_click=move_item_up, args=("proc_steps", i))
+                    st.button(f"⬆️ Move Up", key=f"up_step_{i}", on_click=move_item_up, args=("proc_steps", i))
                 with col2:
-                    st.button(f"⬇️ Move Down {i+1}", key=f"down_step_{i}", on_click=move_item_down, args=("proc_steps", i))
+                    st.button(f"⬇️ Move Down", key=f"down_step_{i}", on_click=move_item_down, args=("proc_steps", i))
                 with col3:
-                    st.button(f"❌ Remove Step {i+1}", key=f"remove_step_{i}", on_click=remove_item, args=("proc_steps", i))
+                    st.button(f"❌ Remove", key=f"remove_step_{i}", on_click=remove_item, args=("proc_steps", i))
                 with col4:
-                    st.button(f"➕ Add Step After {i+1}", key=f"add_after_step_{i}", on_click=insert_item_after, args=("proc_steps", i))
+                    st.button(f"➕ Add Step", key=f"add_after_step_{i}", on_click=insert_item_after, args=("proc_steps", i))
 
         st.button("➕ Add Step", on_click=append_item, args=("proc_steps",))
 
@@ -260,6 +272,9 @@ def new_experiment_page():
             file_name=f"{filename_base}.zip",
             mime="application/zip"
         )
+
+        # --- Show preview ---
+        st.json(metadata)
 
 if __name__ == "__main__":
     new_experiment_page()
