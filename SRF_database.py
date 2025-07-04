@@ -20,7 +20,7 @@ def main():
     - Create: Add new experimental data to the database
     - README: Show the README documentation with instructions and info
     """
-    LOGO_LASA = "utils/images/logo.png"
+    LOGO_LASA = "utils/images/logo_bloom.png"
     LASA_LINK = "https://homelasa.mi.infn.it/en/"
     st.logo(LOGO_LASA, icon_image=LOGO_LASA, link=LASA_LINK)
     with open("utils/streamlit_README.md", "r", encoding="utf-8") as file:
