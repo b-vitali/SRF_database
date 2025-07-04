@@ -1,11 +1,4 @@
 {
-  "EP": {
-    "tags": ["EP","warmEP", "coldEP"],
-    "parameters": {
-      "T [C]": 0.0,
-      "Thick [µm]": 0.0
-    }
-  },
   "baking": {
     "tags": ["baking","midT", "2step", "lowT"],
     "parameters": {
@@ -13,11 +6,33 @@
       "Time [h]": 0.0
     }
   },
+  "N_doping": {
+    "tags": ["N_doping", "800C", "nitrogen", "diffusion"],
+    "parameters": {
+      "T [C]": 800.0,
+      "Time [h]": 0.0,
+      "Pressure [Pa]": 0.0
+    }
+  },
   "BCP": {
     "tags": ["BCP"],
     "parameters": {
       "T [C]": 0.0,
       "Time [h]": 0.0
+    }
+  },
+  "EP": {
+    "tags": ["EP","warmEP", "coldEP"],
+    "parameters": {
+      "T [C]": 0.0,
+      "Thick [µm]": 0.0
+    }
+  },
+  "HPR": {
+    "tags": ["HPR", "high_pressure", "rinse", "Ultra-pure","Deionized"],
+    "parameters": {
+      "Pressure [bar]": 0.0,
+      "Time [min]": 0.0
     }
   },
   "Else": {

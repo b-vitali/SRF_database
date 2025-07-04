@@ -101,41 +101,55 @@ def new_experiment_page():
             expander_title = f"Processing Step {i+1} — {summary}"
 
             with st.expander(expander_title, expanded=step.get("expanded", True)):
-                st.markdown("**Select Process Type**")
-                cols = st.columns(len(processes))
-                for idx, proc_name in enumerate(processes.keys()):
-                    if cols[idx].button(proc_name, key=f"ptype_btn_{i}_{proc_name}"):
-                        step["process_type"] = proc_name
-                        tags_list = processes[proc_name].get("tags", [])
-                        step["tag"] = tags_list[0] if tags_list else None
-                        for param in processes[proc_name]["parameters"]:
-                            step[param] = processes[proc_name]["parameters"][param]
-                        st.rerun()
+                colA, colB = st.columns(2)
+                with colA:
+                    # --- Process Type Selection ---
+                    process_names = list(processes.keys())
+                    selected_process = step.get("process_type", process_names[0] if process_names else None)
 
-                selected_type = step.get("process_type", "")
-                st.markdown(f"**Selected Process Type:** `{selected_type}`")
-
-                all_tags = processes.get(selected_type, {}).get("tags", [])
-                if "tag" not in step:
-                    step["tag"] = None
-
-                st.markdown("**Select One Tag**")
-                tag_cols = st.columns(max(1, len(all_tags)))
-                for j, tag_item in enumerate(all_tags):
-                    if tag_cols[j].button(tag_item, key=f"tag_{i}_{j}"):
-                        step["tag"] = None if step["tag"] == tag_item else tag_item
-                        st.rerun()
-
-                st.markdown(f"**Selected Tag:** `{step['tag']}`")
-
-                st.markdown("**Parameters**")
-                for param_name in processes.get(selected_type, {}).get("parameters", {}):
-                    step[param_name] = st.number_input(
-                        f"{param_name}",
-                        value=step.get(param_name, 0.0),
-                        key=f"param_{i}_{param_name}",
-                        format="%.2f"
+                    new_process = st.radio(
+                        label="**Select Process**",
+                        options=process_names,
+                        index=process_names.index(selected_process) if selected_process in process_names else 0,
+                        key=f"process_radio_{i}",
+                        horizontal=True
                     )
+
+                    if new_process != step.get("process_type"):
+                        # Update selected process
+                        step["process_type"] = new_process
+                        tags_list = processes[new_process].get("tags", [])
+                        step["tag"] = tags_list[0] if tags_list else None
+                        for param, val in processes[new_process]["parameters"].items():
+                            step[param] = val
+                        st.rerun()
+
+                    # --- Tag Selection ---
+                    selected_tags = processes.get(step["process_type"], {}).get("tags", [])
+                    current_tag = step.get("tag")
+
+                    if selected_tags:
+                        new_tag = st.radio(
+                            label="**Select Tag**",
+                            options=selected_tags,
+                            index=selected_tags.index(current_tag) if current_tag in selected_tags else 0,
+                            key=f"tag_radio_{i}",
+                            horizontal=True
+                        )
+
+                        if new_tag != step.get("tag"):
+                            step["tag"] = new_tag
+                            st.rerun()
+
+                with colB:
+                    st.markdown("**Parameters**")
+                    for param_name in processes.get(selected_process, {}).get("parameters", {}):
+                        step[param_name] = st.number_input(
+                            f"{param_name}",
+                            value=step.get(param_name, 0.0),
+                            key=f"param_{i}_{param_name}",
+                            format="%.2f"
+                        )
 
                 # Description text input
                 step['description'] = st.text_input(
